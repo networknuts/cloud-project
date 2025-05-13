@@ -32,16 +32,105 @@ You will deploy the [Shopizer](https://github.com/shopizer-ecommerce/shopizer) d
 
 ## Prerequisites
 
-* AWS account with permissions for RDS, S3, IAM, Elastic Beanstalk, and CloudFront.
-* Shopizer application packaged as a ZIP (`shopizer-deploy.zip`) containing:
+Follow these steps to prepare your environment:
 
-  ```text
-  shopizer-deploy.zip
-  ├── shopizer-<version>-boot.jar
-  └── .ebextensions/
-      └── postdeploy.config
-  ```
-* AWS CLI installed and configured (optional for S3 sync operations).
+### 1. AWS Account and Permissions
+
+1. **Sign up for AWS** (if you don’t have an account):
+
+   * Visit [https://aws.amazon.com](https://aws.amazon.com) and click **Create an AWS Account**.
+2. **Create an IAM user** for deployments:
+
+   * Open the **IAM** console.
+   * Go to **Users** → **Add users**.
+   * Username: `deploy-user` (or your choice).
+   * Select **Programmatic access** and **AWS Management Console access**.
+   * Under **Permissions**, attach the **AdministratorAccess** policy (or a custom policy granting RDS, S3, IAM, Elastic Beanstalk, and CloudFront permissions).
+   * Complete the wizard and download the **Access Key ID** and **Secret Access Key**.
+3. **(Optional)** Create IAM groups for finer-grained control:
+
+   * In **IAM**, create a group (e.g. `deployers`) with required policies.
+   * Add your `deploy-user` to this group.
+
+### 2. Package the Shopizer Application (on a temporary EC2 instance)
+
+Assuming you’ll perform these steps on a fresh EC2 instance:
+
+1. **Launch an EC2 instance**
+
+   * AMI: **Amazon Linux 2 AMI (HVM), SSD Volume Type** (e.g. `ami-0abcdef1234567890` in us-east-1)
+   * Instance type: **t3.small** (or larger)
+   * Key pair: your SSH key
+   * Network: same VPC/subnet as your RDS (or a public subnet with internet access)
+   * Security group: allow **SSH (port 22)** from your IP
+
+2. **Connect via SSH**:
+
+   ```bash
+   ssh -i /path/to/your-key.pem ec2-user@<EC2_PUBLIC_IP>
+   ```
+
+3. **Install prerequisites**:
+
+   ```bash
+   sudo yum update -y
+   sudo yum install -y git java-11-amazon-corretto-devel unzip zip
+   ```
+
+4. **Clone the Shopizer repository**:
+
+   ```bash
+   git clone https://github.com/shopizer-ecommerce/shopizer.git
+   cd shopizer
+   ```
+
+5. **Ensure the Gradle wrapper is available and executable**:
+
+   * The Gradle wrapper (`gradlew` and `gradlew.bat`) is included in the repo.
+   * Make it executable:
+
+     ```bash
+     chmod +x gradlew
+     ```
+
+6. **Build the Spring Boot JAR**:
+
+   ```bash
+   ./gradlew clean assemble   # or: mvn clean package
+   ```
+
+7. **Prepare the deployment ZIP**:
+
+   ```bash
+   mkdir deploy
+   cp build/libs/shopizer-*-boot.jar deploy/shopizer-boot.jar
+   mkdir -p deploy/.ebextensions
+   cp .ebextensions/postdeploy.config deploy/.ebextensions/
+   cd deploy
+   zip -r ../shopizer-deploy.zip .
+   cd ..
+   ```
+
+### 3. Install and Configure the AWS CLI
+
+1. **Install AWS CLI v2**:
+
+   * **macOS**: `brew install awscli`
+   * **Windows**: Download and run the MSI installer from AWS docs.
+   * **Linux**: Follow instructions at [https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+2. **Verify installation**:
+
+   ```bash
+   aws --version
+   ```
+3. **Configure AWS CLI**:
+
+   ```bash
+   aws configure
+   # Enter your Access Key ID, Secret Access Key,
+   # Default region name (e.g., us-east-1),
+   # Default output format (e.g., json)
+   ```
 
 ---
 
