@@ -74,10 +74,53 @@ Assuming you’ll perform these steps on a fresh EC2 instance:
 
    ```bash
    sudo yum update -y
-   sudo yum install -y git java-11-amazon-corretto-devel unzip zip
+   sudo yum install -y git unzip zip
    ```
 
-4. **Clone the Shopizer repository**:
+   ### Install Java 11
+
+   Amazon Linux 2 may not include the `corretto11` topic in Amazon Linux Extras. You have two options:
+
+   **Option A: Install OpenJDK 11 via Amazon Linux Extras**
+
+   ```bash
+   sudo amazon-linux-extras enable java-openjdk11
+   sudo yum install -y java-11-openjdk-devel
+   ```
+
+   **Option B: Install Amazon Corretto 11 manually**
+
+   ```bash
+   curl -Lo corretto11.rpm https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.rpm
+   sudo yum localinstall -y corretto11.rpm
+   rm -f corretto11.rpm
+   ```
+
+   **Verify Java installation**:
+
+   ```bash
+   which java    # e.g. /usr/bin/java
+   which javac   # e.g. /usr/bin/javac
+   java -version # Amazon Corretto or OpenJDK 11
+   javac -version# 11.x.x
+   ```
+
+   **If Java is still not found or JAVA\_HOME is not set**:
+
+   1. Find the install location:
+
+      ```bash
+      sudo find /usr/lib/jvm -maxdepth 1 -type d
+      ```
+   2. Set JAVA\_HOME and update PATH:
+
+      ```bash
+      echo 'export JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto' >> ~/.bashrc
+      echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+      source ~/.bashrc
+      ```
+
+4. **Clone the Shopizer repository**: **Clone the Shopizer repository**: **Clone the Shopizer repository**: **Clone the Shopizer repository**:
 
    ```bash
    git clone https://github.com/shopizer-ecommerce/shopizer.git
@@ -86,15 +129,21 @@ Assuming you’ll perform these steps on a fresh EC2 instance:
 
 5. **Ensure the Maven wrapper is available and executable**:
 
-   * The Maven wrapper script (`mvnw`) is included at the project root.
-   * Wrapper configuration lives under `.mvn/wrapper/`.
-   * Make it executable:
+   * The Maven wrapper script `mvnw` is located at the project root (`./mvnw`).
+   * The wrapper JAR and properties live under `.mvn/wrapper/`:
+
+     ```bash
+     ls -R .mvn/wrapper
+     # .mvn/wrapper:
+     # gradle-wrapper.jar  gradle-wrapper.properties
+     ```
+   * Make the script executable:
 
      ```bash
      chmod +x mvnw
      ```
 
-6. **Build the Spring Boot JAR**:
+6. **Build the Spring Boot JAR**: **Build the Spring Boot JAR**:
 
    ```bash
    ./mvnw clean package -DskipTests
