@@ -58,11 +58,11 @@ Assuming you’ll perform these steps on a fresh EC2 instance:
 
 1. **Launch an EC2 instance**
 
-   * AMI: **Amazon Linux 2 AMI (HVM), SSD Volume Type** (e.g. `ami-0abcdef1234567890` in us-east-1)
+   * AMI: **Amazon Linux 2 AMI (HVM), SSD Volume Type** (e.g. `ami-0abcdef1234567890` in us-east-1)
    * Instance type: **t3.small** (or larger)
    * Key pair: your SSH key
    * Network: same VPC/subnet as your RDS (or a public subnet with internet access)
-   * Security group: allow **SSH (port 22)** from your IP
+   * Security group: allow **SSH (port 22)** from your IP
 
 2. **Connect via SSH**:
 
@@ -84,26 +84,27 @@ Assuming you’ll perform these steps on a fresh EC2 instance:
    cd shopizer
    ```
 
-5. **Ensure the Gradle wrapper is available and executable**:
+5. **Ensure the Maven wrapper is available and executable**:
 
-   * The Gradle wrapper (`gradlew` and `gradlew.bat`) is included in the repo.
+   * The Maven wrapper script (`mvnw`) is included at the project root.
+   * Wrapper configuration lives under `.mvn/wrapper/`.
    * Make it executable:
 
      ```bash
-     chmod +x gradlew
+     chmod +x mvnw
      ```
 
-6. **Build the Spring Boot JAR**:
+6. **Build the Spring Boot JAR**:
 
    ```bash
-   ./gradlew clean assemble   # or: mvn clean package
+   ./mvnw clean package -DskipTests
    ```
 
 7. **Prepare the deployment ZIP**:
 
    ```bash
    mkdir deploy
-   cp build/libs/shopizer-*-boot.jar deploy/shopizer-boot.jar
+   cp modules/sm-shop/target/shopizer-*.jar deploy/shopizer-boot.jar
    mkdir -p deploy/.ebextensions
    cp .ebextensions/postdeploy.config deploy/.ebextensions/
    cd deploy
@@ -111,7 +112,7 @@ Assuming you’ll perform these steps on a fresh EC2 instance:
    cd ..
    ```
 
-### 3. Install and Configure the AWS CLI
+### 3. Install and Configure the AWS CLI. Install and Configure the AWS CLI
 
 1. **Install AWS CLI v2**:
 
